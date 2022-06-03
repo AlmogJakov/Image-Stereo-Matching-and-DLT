@@ -16,9 +16,12 @@ def main():
     print("ID:", 203201389)
 
     # Read images
-    i = 1
+    i = 0
     L = cv2.imread(os.path.join('input', 'pair%d-L.png' % i), 0) / 255.0
     R = cv2.imread(os.path.join('input', 'pair%d-R.png' % i), 0) / 255.0
+    # i = 2
+    # L = cv2.imread(os.path.join('input', 'pair%d-D_L.png' % i), 0) / 255.0
+    # R = cv2.imread(os.path.join('input', 'pair%d-D_R.png' % i), 0) / 255.0
 
     # Display depth SSD
     displayDepthImage(L, R, (0, 4), method=disparitySSD)
