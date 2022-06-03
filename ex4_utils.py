@@ -66,10 +66,10 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
         return float('inf')
     l_win = img_l[y - ker_half: y + ker_half + 1, x - ker_half: x + ker_half + 1]
     r_win = img_r[y - ker_half: y + ker_half + 1, x - ker_half - offset: x + ker_half + 1 - offset]
-    l_mean = np.mean(l_win)
-    r_mean = np.mean(r_win)
-    l_win = l_win - l_mean
-    r_win = r_win - r_mean
+    # l_mean = np.mean(l_win)
+    # r_mean = np.mean(r_win)
+    # l_win = l_win - l_mean
+    # r_win = r_win - r_mean
     l_r = (l_win * r_win).sum()
     l_var = (l_win * l_win).sum()
     r_var = (r_win * r_win).sum()
