@@ -36,11 +36,11 @@ def disparityCalc(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), 
     for y in range(kernel_half, h - kernel_half):
         for x in range(kernel_half, w - kernel_half):
             best_offset = 0
-            best_ssd = float('inf')  # init as max error (max float)
+            lowest_error = float('inf')  # init as max error (max float)
             for offset in range(disp_range[0], disp_range[1]):
-                ssd = error_func(img_l, img_r, y, x, offset, k_size)
-                if ssd < best_ssd:
-                    best_ssd = ssd
+                error = error_func(img_l, img_r, y, x, offset, k_size)
+                if error < lowest_error:
+                    lowest_error = error
                     best_offset = offset
             depth[y, x] = best_offset / 255
     return depth
@@ -58,17 +58,6 @@ def computeSSD(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
 
 def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int, k_size: int):
     ker_half = int(k_size / 2)
-    # l_mean, r_mean, n = 0, 0, 0
-    # # Loop over window
-    # for v in range(-ker_half, ker_half + 1):
-    #     for u in range(-ker_half, ker_half + 1):
-    #         # Calculate cumulative sum
-    #         l_mean += img_l[y + v, x + u]
-    #         r_mean += img_r[y + v, x + u - offset]
-    #         n += 1
-    # l_mean = l_mean / n
-    # r_mean = r_mean / n
-
     # if the window exceeds the limits of the image return max error
     if x - ker_half - offset < 0:
         return float('inf')
@@ -78,15 +67,6 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
     r_mean = np.mean(r_win)
     l_win = l_win - l_mean
     r_win = r_win - r_mean
-    # l_r, l_var, r_var = 0, 0, 0
-    # for v in range(-ker_half, ker_half + 1):
-    #     for u in range(-ker_half, ker_half + 1):
-    #         # Calculate terms
-    #         l = img_l[y + v, x + u] - l_mean
-    #         r = img_r[y + v, x + u - offset] - r_mean
-    #         l_r += l * r
-    #         l_var += l ** 2
-    #         r_var += r ** 2
     l_r = (l_win * r_win).sum()
     l_var = (l_win * l_win).sum()
     r_var = (r_win * r_win).sum()
@@ -95,6 +75,7 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
     return -l_r / np.sqrt(l_var * r_var)
 
 
+# https://math.stackexchange.com/questions/3509039/calculate-homography-with-and-without-svd
 def computeHomography(src_pnt: np.ndarray, dst_pnt: np.ndarray) -> (np.ndarray, float):
     """
     Finds the homography matrix, M, that transforms points from src_pnt to dst_pnt.
@@ -106,7 +87,28 @@ def computeHomography(src_pnt: np.ndarray, dst_pnt: np.ndarray) -> (np.ndarray, 
 
     return: (Homography matrix shape:[3,3], Homography error)
     """
-    pass
+    a_matrix = []
+    for i in range(src_pnt.shape[0]):
+        x_src, y_src = src_pnt[i][0], src_pnt[i][1]
+        x_dst, y_dst = dst_pnt[i][0], dst_pnt[i][1]
+        a_matrix.append([x_src, y_src, 1, 0, 0, 0, -x_dst * x_src, -x_dst * y_src, -x_dst])
+        a_matrix.append([0, 0, 0, x_src, y_src, 1, -y_dst * x_src, -y_dst * y_src, -y_dst])
+    [u, s, vt] = np.linalg.svd(np.array(a_matrix))
+    # We need the last column of v^t so we take last row of v.
+    # we can get the matrix with:
+    #   homography = Vt[-1].reshape(3, 3)
+    # but we want the last number to be 1 (homography[2][2] = 1)
+    # so we need to divide homography matrix by the last number (/ homography[2, 2])
+    homography = (vt[-1]).reshape(3, 3)
+    homography = homography / homography[2, 2]
+    total_error = 0
+    for i in range(src_pnt.shape[0]):
+        src_points = np.append(src_pnt[i], 1)
+        dst_points = np.append(dst_pnt[i], 1)
+        res = homography.dot(src_points)
+        res_homogeneous = res / res[2]
+        total_error += np.sqrt(sum(res_homogeneous - dst_points) ** 2)
+    return homography, total_error
 
 
 def warpImag(src_img: np.ndarray, dst_img: np.ndarray) -> None:
