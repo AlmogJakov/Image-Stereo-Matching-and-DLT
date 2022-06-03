@@ -5,6 +5,7 @@
 import math
 
 from cv2 import cv2
+import numpy as np
 
 
 def print_hi(name):
@@ -16,3 +17,6 @@ def print_hi(name):
 if __name__ == '__main__':
     print_hi('PyCharm')
     print("Your OpenCV version is: " + cv2.__version__)
+    a = np.array([[1, 0], [0, 1]])
+    b = np.array([[4, 1], [2, 2]])
+    print((a * b).sum())
