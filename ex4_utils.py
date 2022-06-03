@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from cv2 import cv2
 
 
 # https://github.com/davechristian/Simple-SSD-Stereo/blob/main/stereomatch_SSD.py
@@ -122,7 +123,6 @@ def warpImag(src_img: np.ndarray, dst_img: np.ndarray) -> None:
 
     output: None.
     """
-
     dst_p = []
     fig1 = plt.figure()
 
@@ -130,10 +130,8 @@ def warpImag(src_img: np.ndarray, dst_img: np.ndarray) -> None:
         x = event.xdata
         y = event.ydata
         print("Loc: {:.0f},{:.0f}".format(x, y))
-
         plt.plot(x, y, '*r')
         dst_p.append([x, y])
-
         if len(dst_p) == 4:
             plt.close()
         plt.show()
@@ -144,8 +142,50 @@ def warpImag(src_img: np.ndarray, dst_img: np.ndarray) -> None:
     plt.show()
     dst_p = np.array(dst_p)
 
-    ##### Your Code Here ######
+    # ##### Your Code Here ######
+    src_h, src_w = src_img.shape[0], src_img.shape[1]
+    # print(dst_p)
+    # dst_p = np.array([dst_p[idx[0]] for idx in np.argsort(dst_p, axis=0)])
+    # print(dst_p)
+    # src_p = [[0, 0], [src_h-1, 0], [0, src_w-1], [src_h-1, src_w-1]]
+    src_p = []
+    fig2 = plt.figure()
 
-    # out = dst_img * mask + src_out * (1 - mask)
-    # plt.imshow(out)
-    # plt.show()
+    def onclick_2(event):
+        x = event.xdata
+        y = event.ydata
+        print("Loc: {:.0f},{:.0f}".format(x, y))
+        plt.plot(x, y, '*r')
+        src_p.append([x, y])
+        if len(src_p) == 4:
+            plt.close()
+        plt.show()
+
+    # display image 2
+    cid = fig2.canvas.mpl_connect('button_press_event', onclick_2)
+    plt.imshow(src_img)
+    plt.show()
+    src_p = np.array(src_p)
+    # print(src_p)
+    # np.zeros(dst_img.shape)
+    homography, total_error = computeHomography(np.array(src_p), np.array(dst_p))
+    homography = np.array(homography)
+    for i in range(len(src_p)):
+        src_points = np.append(src_p[i], 1)
+        res = homography.dot(src_points)
+        res_homogeneous = res / res[2]
+        print(res_homogeneous)
+    # mgimg = warpImages(src_img, dst_img, homography)
+    # print(homography)
+    print(src_p)
+    print(dst_p)
+    src_out = cv2.warpPerspective(src_img, np.array(homography), (dst_img.shape[1], dst_img.shape[0]))
+    plt.imshow(src_out)
+    plt.show()
+    mask = np.array((src_out == [0, 0, 0]).all(-1), dtype=np.float32)
+    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+    plt.imshow(mask)
+    plt.show()
+    out = dst_img * mask + src_out * (1 - mask)
+    plt.imshow(out)
+    plt.show()
