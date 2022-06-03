@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 from cv2 import cv2
 
 
-# https://github.com/davechristian/Simple-SSD-Stereo/blob/main/stereomatch_SSD.py
-# https://github.com/2b-t/stereo-matching
 def disparitySSD(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), k_size: int) -> np.ndarray:
     """
     img_l: Left image
@@ -76,7 +74,6 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
     return -l_r / np.sqrt(l_var * r_var)
 
 
-# https://math.stackexchange.com/questions/3509039/calculate-homography-with-and-without-svd
 def computeHomography(src_pnt: np.ndarray, dst_pnt: np.ndarray) -> (np.ndarray, float):
     """
     Finds the homography matrix, M, that transforms points from src_pnt to dst_pnt.
