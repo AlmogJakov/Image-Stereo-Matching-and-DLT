@@ -28,9 +28,9 @@ def disparityNC(img_l: np.ndarray, img_r: np.ndarray, disp_range: int, k_size: i
 
 
 def disparityCalc(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), k_size: int, error_func) -> np.ndarray:
-    w, h = img_l.shape  # assume that both images are same size
-    depth = np.zeros((w, h), np.float32)
-    depth.shape = h, w
+    h, w = img_l.shape  # assume that both images are same size
+    depth = np.zeros(img_l.shape, np.float32)
+    #depth.shape = h, w
     kernel_half = int(k_size / 2)
     for y in range(kernel_half, h - kernel_half):
         for x in range(kernel_half, w - kernel_half):
@@ -47,6 +47,9 @@ def disparityCalc(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), 
 
 def computeSSD(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int, k_size: int):
     kernel_half = int(k_size / 2)
+    if x - kernel_half - offset < 0 or x + kernel_half >= img_l.shape[1] \
+            or y - kernel_half < 0 or y + kernel_half >= max(img_r.shape[0], img_r.shape[0]):
+        return float('inf')
     ssd = 0
     for v in range(-kernel_half, kernel_half + 1):
         for u in range(-kernel_half, kernel_half + 1):
@@ -58,7 +61,8 @@ def computeSSD(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
 def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int, k_size: int):
     ker_half = int(k_size / 2)
     # if the window exceeds the limits of the image return max error
-    if x - ker_half - offset < 0:
+    if x - ker_half - offset < 0 or x + ker_half >= img_l.shape[1] \
+            or y - ker_half < 0 or y + ker_half >= max(img_r.shape[0], img_r.shape[0]):
         return float('inf')
     l_win = img_l[y - ker_half: y + ker_half + 1, x - ker_half: x + ker_half + 1]
     r_win = img_r[y - ker_half: y + ker_half + 1, x - ker_half - offset: x + ker_half + 1 - offset]
@@ -76,6 +80,8 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
     #   Near -1 means, that it's likely that one image is a negative and should be inverted.
     # Since we treat this method as an error function then we return the inverse value (minus)
     # Therefore for the best match (value 1) we get a minimum error (value -1)
+    if np.sqrt(l_var * r_var) == 0:
+        return 0
     return -l_r / np.sqrt(l_var * r_var)
 
 

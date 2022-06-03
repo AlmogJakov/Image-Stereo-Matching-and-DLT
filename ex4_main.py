@@ -16,7 +16,7 @@ def main():
     print("ID:", 203201389)
 
     # Read images
-    i = 0
+    i = 1
     L = cv2.imread(os.path.join('input', 'pair%d-L.png' % i), 0) / 255.0
     R = cv2.imread(os.path.join('input', 'pair%d-R.png' % i), 0) / 255.0
 
