@@ -74,7 +74,6 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
     #   Near 0 indication that there is no correlation.
     #   Near +1 means, that the image is very similar to the other one.
     #   Near -1 means, that it's likely that one image is a negative and should be inverted.
-    # Source: https://stackoverflow.com/questions/17189513/does-a-negative-cross-correlation-show-high-or-low-similarity
     # Since we treat this method as an error function then we return the inverse value (minus)
     # Therefore for the best match (value 1) we get a minimum error (value -1)
     return -l_r / np.sqrt(l_var * r_var)
