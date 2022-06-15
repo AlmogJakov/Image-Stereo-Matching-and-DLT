@@ -2,6 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from cv2 import cv2
 
+'''
+#################################################################################################################
+############################################### Stereo Matching #################################################
+#################################################################################################################
+'''
+
 
 def disparitySSD(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), k_size: int) -> np.ndarray:
     """
@@ -27,10 +33,12 @@ def disparityNC(img_l: np.ndarray, img_r: np.ndarray, disp_range: int, k_size: i
     return disparityCalc(img_l, img_r, disp_range, k_size, computeNCC)
 
 
+# -------------------------------------- Disparity Calculator main function -------------------------------------
+
 def disparityCalc(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), k_size: int, error_func) -> np.ndarray:
     h, w = img_l.shape  # assume that both images are same size
     depth = np.zeros(img_l.shape, np.float32)
-    #depth.shape = h, w
+    # depth.shape = h, w
     kernel_half = int(k_size / 2)
     for y in range(kernel_half, h - kernel_half):
         for x in range(kernel_half, w - kernel_half):
@@ -45,6 +53,8 @@ def disparityCalc(img_l: np.ndarray, img_r: np.ndarray, disp_range: (int, int), 
     return depth
 
 
+# ---------------------------------- Sum of Squared Differences error function ----------------------------------
+
 def computeSSD(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int, k_size: int):
     kernel_half = int(k_size / 2)
     if x - kernel_half - offset < 0 or x + kernel_half >= img_l.shape[1] \
@@ -57,6 +67,8 @@ def computeSSD(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
             ssd += ssd_temp * ssd_temp
     return ssd
 
+
+# --------------------------------- Normalized Cross Correlation error function ---------------------------------
 
 def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int, k_size: int):
     ker_half = int(k_size / 2)
@@ -83,6 +95,13 @@ def computeNCC(img_l: np.ndarray, img_r: np.ndarray, y: int, x: int, offset: int
     if np.sqrt(l_var * r_var) == 0:
         return 0
     return -l_r / np.sqrt(l_var * r_var)
+
+
+'''
+#################################################################################################################
+################################################# Homography ####################################################
+#################################################################################################################
+'''
 
 
 def computeHomography(src_pnt: np.ndarray, dst_pnt: np.ndarray) -> (np.ndarray, float):
@@ -118,6 +137,13 @@ def computeHomography(src_pnt: np.ndarray, dst_pnt: np.ndarray) -> (np.ndarray, 
         res_homogeneous = res / res[2]
         total_error += np.sqrt(sum(res_homogeneous - dst_points) ** 2)
     return homography, total_error
+
+
+'''
+#################################################################################################################
+################################################### Warping #####################################################
+#################################################################################################################
+'''
 
 
 def warpImag(src_img: np.ndarray, dst_img: np.ndarray) -> None:
@@ -178,3 +204,25 @@ def warpImag(src_img: np.ndarray, dst_img: np.ndarray) -> None:
     out = dst_img * mask + src_out * (1 - mask)
     plt.imshow(out)
     plt.show()
+
+
+'''
+#################################################################################################################
+################################################# That's it! ####################################################
+#################################################################################################################
+░░░░░░░░░░░░░░░░░░░░░░██████████████░░░░░░░░░
+░░███████░░░░░░░░░░███▒▒▒▒▒▒▒▒▒▒▒▒▒███░░░░░░░
+░░█▒▒▒▒▒▒█░░░░░░░███▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒███░░░░
+░░░█▒▒▒▒▒▒█░░░░██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░░
+░░░░█▒▒▒▒▒█░░░██▒▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒▒███░
+░░░░░█▒▒▒█░░░█▒▒▒▒▒▒████▒▒▒▒▒▒▒▒▒████▒▒▒▒▒▒██
+░░░█████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██
+░░░█▒▒▒▒▒▒▒▒▒▒▒▒█▒▒▒▒▒▒▒▒▒▒▒███▒▒▒▒▒▒▒▒▒▒▒▒██
+░██▒▒▒▒▒▒▒▒▒▒▒▒▒█▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒██
+██▒▒▒███████████▒▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒▒██
+█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒█▒▒▒▒▒▒█████████████▒▒▒▒▒▒▒██
+██▒▒▒▒▒▒▒▒▒▒▒▒▒▒█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░
+░█▒▒▒███████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░░░
+░██▒▒▒▒▒▒▒▒▒▒████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒█░░░░░
+░░████████████░░░██████████████████████░░░░░░
+'''
